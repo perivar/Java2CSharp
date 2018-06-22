@@ -7,6 +7,8 @@ using Java2CSharp.Configuration;
 using System.Configuration;
 using Java2CSharp.Rules;
 using Microsoft.Extensions.Configuration;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Java2CSharp
 {
@@ -65,24 +67,57 @@ namespace Java2CSharp
             Log(string.Format("[Line {0}] {1}", iRowNumber, ruleName));
         }
 
-        public void Run(string path)
+        public void Run(string sourceDirectory, string targetDirectory)
         {
             // read from file
-            if (!File.Exists(path))
+            if (!Directory.Exists(sourceDirectory))
             {
-                Console.WriteLine("File not found");
+                Console.WriteLine("Source-directory not found.");
                 return;
             }
-            StreamReader sr = new StreamReader(path, true);
+            if (!Directory.Exists(targetDirectory))
+            {
+                Console.WriteLine("Target-directory not found.");
+                return;
+            }
+
+            IEnumerable<string> javaFiles =
+                Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories)
+                .Where(f => ".java".Equals(Path.GetExtension(f).ToLower()));
+            Console.Out.WriteLine("Found {0} files in scan directory.", javaFiles.Count());
+
+            foreach (var javaFile in javaFiles)
+            {
+                string directoryPath = Path.GetDirectoryName(javaFile);
+                string relativePath = Path.GetRelativePath(sourceDirectory, directoryPath);
+                string newFileName = Path.GetFileNameWithoutExtension(javaFile) + ".cs";
+
+                string destinationFilePath = "";
+                if (!relativePath.Equals("."))
+                {
+                    destinationFilePath = Path.Combine(new string[] { targetDirectory, relativePath, newFileName });
+                }
+                else
+                {
+                    destinationFilePath = Path.Combine(new string[] { targetDirectory, newFileName });
+                }
+
+                ConvertFile(javaFile, destinationFilePath);
+            }
+        }
+
+        private bool ConvertFile(string sourceFilePath, string destinationFilePath)
+        {
+            var sr = new StreamReader(sourceFilePath, true);
             string strOrigin = sr.ReadToEnd();
             sr.Close();
 
             // run rules
-            StringBuilder sb = new StringBuilder();
-            string[] arrInput = strOrigin.Split(new char[] { '\n' });
+            var sb = new StringBuilder();
+            var arrInput = strOrigin.Split(new char[] { '\n' });
             for (int i = 0; i < arrInput.Length; i++)
             {
-                string tmp = arrInput[i].Replace("\r", "");
+                var tmp = arrInput[i].Replace("\r", "");
 
                 int ruleNum = i + 1;
                 foreach (Rule rule in rules)
@@ -94,11 +129,20 @@ namespace Java2CSharp
                 }
                 sb.AppendLine(tmp);
             }
+            string convertedFile = sb.ToString();
+
+            // remove double newlines
+            string result = Regex.Replace(convertedFile, @"[\r\n]{3,}", "\r\n\r\n");
+
+            // add using System;
+            result = "using System;\r\n" + result;
 
             // save result to file
-            StreamWriter sw = new StreamWriter(path + ".cs", false);
-            sw.Write(sb.ToString());
+            var sw = new StreamWriter(destinationFilePath, false);
+            sw.Write(result);
             sw.Close();
+
+            return true;
         }
     }
 }

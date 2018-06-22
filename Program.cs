@@ -9,9 +9,9 @@ namespace Java2CSharp
     {
         static void Main(string[] args)
         {
-            if (args.Length == 0)
+            if (args.Length < 2)
             {
-                Console.WriteLine("Missing Argument - file name");
+                Console.WriteLine("Missing Arguments <Source-directory with Java-files> <Destination-directory for CS-files>");
                 return;
             }
 
@@ -23,7 +23,7 @@ namespace Java2CSharp
 
             RuleEngine re = new RuleEngine(config);
             re.LoadRules();
-            re.Run(args[0]);
+            re.Run(args[0], args[1]);
         }
     }
 }
