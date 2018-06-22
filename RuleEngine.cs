@@ -135,7 +135,34 @@ namespace Java2CSharp
             string result = Regex.Replace(convertedFile, @"[\r\n]{3,}", "\r\n\r\n");
 
             // add using System;
-            result = "using System;\r\n" + result;
+            result = "using System;\r\nusing System.Text;\r\n\r\n" + result;
+
+            // fix namespace like namespace com.mpatric.mp3agic;
+            // ?: is non-capturing group
+            // ?<element> is a named captured group
+            var regNameSpace = new Regex(@"namespace (\w+(?:\.(?<element>\w+))*);", RegexOptions.Multiline);
+
+            // match the input and write results
+            Match match = regNameSpace.Match(result);
+            if (match.Success)
+            {
+                var fullMatch = match.Groups[0].Value;
+
+                // get number of matches
+                int lastMatch = match.Groups["element"].Captures.Count;
+
+                // get last group match
+                var nameSpaceName = match.Groups[lastMatch].Value;      
+
+                // create new namespace string and add { 
+                var nameSpace = string.Format("namespace {0} {{", nameSpaceName);
+
+                // replace
+                result = Regex.Replace(result, fullMatch, nameSpace);          
+            }
+
+            // add } at the very end
+            result += "\r\n}";
 
             // save result to file
             var sw = new StreamWriter(destinationFilePath, false);
