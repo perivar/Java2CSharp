@@ -67,7 +67,7 @@ namespace Java2CSharp
             Log(string.Format("[Line {0}] {1}", iRowNumber, ruleName));
         }
 
-        public void Run(string sourceDirectory, string targetDirectory)
+        public void ConvertDirectory(string sourceDirectory, string targetDirectory)
         {
             // read from file
             if (!Directory.Exists(sourceDirectory))
@@ -106,7 +106,7 @@ namespace Java2CSharp
             }
         }
 
-        private bool ConvertFile(string sourceFilePath, string destinationFilePath)
+        public void ConvertFile(string sourceFilePath, string destinationFilePath)
         {
             var sr = new StreamReader(sourceFilePath, true);
             string strOrigin = sr.ReadToEnd();
@@ -152,13 +152,18 @@ namespace Java2CSharp
                 int lastMatch = match.Groups["element"].Captures.Count;
 
                 // get last group match
-                var nameSpaceName = match.Groups[lastMatch].Value;      
+                var nameSpaceName = match.Groups[lastMatch].Value;
+
+                if (string.IsNullOrEmpty(nameSpaceName)) {
+                    int index = (lastMatch - 1 > 0 ? lastMatch - 1 : 0);
+                    nameSpaceName = match.Groups[index].Value;
+                }
 
                 // create new namespace string and add { 
                 var nameSpace = string.Format("namespace {0} {{", nameSpaceName);
 
                 // replace
-                result = Regex.Replace(result, fullMatch, nameSpace);          
+                result = Regex.Replace(result, fullMatch, nameSpace);
             }
 
             // add } at the very end
@@ -168,8 +173,6 @@ namespace Java2CSharp
             var sw = new StreamWriter(destinationFilePath, false);
             sw.Write(result);
             sw.Close();
-
-            return true;
         }
     }
 }

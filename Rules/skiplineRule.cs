@@ -9,7 +9,7 @@ namespace Java2CSharp.Rules
     {
         public override bool Execute(string strOrigin, out string strOutput, int iRowNumber)
         {
-            Regex regex = new Regex(@"(import|using)\s(java\.)", RegexOptions.IgnoreCase);
+            Regex regex = new Regex(@"(import|using)\s(javax?\.)", RegexOptions.IgnoreCase);
 
             if (regex.IsMatch(strOrigin))
             {
