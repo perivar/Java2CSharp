@@ -135,7 +135,7 @@ namespace Java2CSharp
             string result = Regex.Replace(convertedFile, @"[\r\n]{3,}", "\r\n\r\n");
 
             // add using System;
-            result = "using System;\r\nusing System.Text;\r\n\r\n" + result;
+            result = "using System;\r\nusing System.IO;\r\nusing System.Text;\r\n\r\n" + result;
 
             // fix namespace like namespace com.mpatric.mp3agic;
             // ?: is non-capturing group
