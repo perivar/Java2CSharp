@@ -146,17 +146,21 @@ namespace Java2CSharp
             Match match = regNameSpace.Match(result);
             if (match.Success)
             {
-                var fullMatch = match.Groups[0].Value;
+                var groupCollection = match.Groups;
+
+                // get first group since it's the full match
+                var fullMatch = groupCollection.FirstOrDefault().Value;
 
                 // get number of matches
-                int lastMatch = match.Groups["element"].Captures.Count;
+                int lastMatch = groupCollection.Count();
 
                 // get last group match
-                var nameSpaceName = match.Groups[lastMatch].Value;
+                var nameSpaceName = match.Groups[lastMatch - 1].Value;
 
-                if (string.IsNullOrEmpty(nameSpaceName)) {
-                    int index = (lastMatch - 1 > 0 ? lastMatch - 1 : 0);
-                    nameSpaceName = match.Groups[index].Value;
+                // uppercase
+                if (!string.IsNullOrEmpty(nameSpaceName))
+                {
+                    nameSpaceName = UppercaseFirst(nameSpaceName);
                 }
 
                 // create new namespace string and add { 
@@ -173,6 +177,17 @@ namespace Java2CSharp
             var sw = new StreamWriter(destinationFilePath, false);
             sw.Write(result);
             sw.Close();
+        }
+
+        static string UppercaseFirst(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return string.Empty;
+            }
+            char[] a = s.ToCharArray();
+            a[0] = char.ToUpper(a[0]);
+            return new string(a);
         }
     }
 }
